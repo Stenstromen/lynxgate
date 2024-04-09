@@ -10,8 +10,21 @@ import (
 )
 
 func NewHandler(db *db.DB) *http.ServeMux {
-	fmt.Println("NewHandler")
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	mux.HandleFunc("GET /ready", func(w http.ResponseWriter, r *http.Request) {
+		err := db.ConnectionCheck()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
 
 	mux.HandleFunc("GET /validate", func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
@@ -99,6 +112,7 @@ func NewHandler(db *db.DB) *http.ServeMux {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
 		response := fmt.Sprintf(`{"account_id": "%s", "token": "%s", "quota": %d}`, user.AccountID, user.Token, user.Quota)
 		w.Write([]byte(response))
 	})

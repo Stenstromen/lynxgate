@@ -22,11 +22,17 @@ func New(dsn string) (*DB, error) {
 	return &DB{Conn: db}, nil
 }
 
+func (db *DB) ConnectionCheck() error {
+	if err := db.Conn.Ping(); err != nil {
+		return fmt.Errorf("failed to ping database: %v", err)
+	}
+	return nil
+}
+
 func (db *DB) InitializeDB() error {
-	fmt.Println("InitializeDB")
 	encryptionKey = os.Getenv("MYSQL_ENCRYPTION_KEY")
 	if encryptionKey == "" {
-		fmt.Errorf("encryption key not set")
+		return fmt.Errorf("encryption key not set")
 	}
 	dsn := os.Getenv("MYSQL_DSN")
 	if dsn == "" {
