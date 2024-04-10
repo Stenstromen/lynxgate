@@ -3,3 +3,4 @@ README.md
 dbdata
 .gitignore
 .dockerignore
+.DS_Store

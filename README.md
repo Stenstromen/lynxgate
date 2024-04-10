@@ -1,5 +1,7 @@
 # LynxGate
 
+![logo](lynxgate_logo.webp)
+
 ## Dev
 
 ### MySQL Encryption Key
