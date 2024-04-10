@@ -27,7 +27,7 @@ func main() {
 	}
 
 	handler := api.NewHandler(dbInstance)
-	port := ":8181"
+	port := ":8080"
 	log.Printf("Server starting on port %s\n", port)
 
 	if err := http.ListenAndServe(port, handler); err != nil {
