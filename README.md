@@ -46,6 +46,39 @@ podman run --rm -d \
 ghcr.io/stenstromen/lynxgate:latest
 ```
 
+### Example requests
+
+#### Create API Token
+
+```bash
+curl -X POST http://localhost/tokens \
+-H "Content-Type: application/json" \
+-d '{"accountID": "Protected_App1", "quota": 100}'
+```
+
+##### `/tokens` Response
+
+```json
+{
+  "accountID": "Protected_App1",
+  "token": "051e74a7469943e7a6fde4ea85a458aa",
+  "quota": 100
+}
+```
+
+#### Test API Token
+
+```bash
+curl -X GET http://localhost/validate \
+-H "Authorization: 051e74a7469943e7a6fde4ea85a458aa"
+```
+
+##### `/validate` Response
+
+```console
+200 OK
+```
+
 ## API Docs
 
 ### Authentication
