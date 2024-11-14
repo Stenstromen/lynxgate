@@ -10,8 +10,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-
-	. "github.com/stenstromen/lynxgate/model"
+	"github.com/stenstromen/lynxgate/model"
 )
 
 func (db *DB) ValidateToken(providedToken string) (int, error) {
@@ -76,7 +75,7 @@ func (db *DB) DeleteToken(accountID string) error {
 	return nil
 }
 
-func (db *DB) GetTokens() ([]Token, error) {
+func (db *DB) GetTokens() ([]model.Token, error) {
 	selectTokensSQL := `
 	SELECT account_id, COALESCE(AES_DECRYPT(token, ?), ''), quota, quota_usage
 	FROM token;`
@@ -87,7 +86,7 @@ func (db *DB) GetTokens() ([]Token, error) {
 	}
 	defer rows.Close()
 
-	var tokens []Token
+	var tokens []model.Token
 	for rows.Next() {
 		var accountID, decryptedToken string
 		var quota, quotaUsage int
@@ -96,7 +95,7 @@ func (db *DB) GetTokens() ([]Token, error) {
 			return nil, fmt.Errorf("failed to scan token: %v", err)
 		}
 
-		tokens = append(tokens, Token{
+		tokens = append(tokens, model.Token{
 			AccountID:  accountID,
 			Token:      decryptedToken,
 			Quota:      quota,
@@ -111,7 +110,7 @@ func (db *DB) GetTokens() ([]Token, error) {
 	return tokens, nil
 }
 
-func (db *DB) GetToken(account_id string) Token {
+func (db *DB) GetToken(account_id string) model.Token {
 	selectTokenSQL := `
 	SELECT AES_DECRYPT(token, ?), quota, quota_usage
 	FROM token
@@ -123,13 +122,13 @@ func (db *DB) GetToken(account_id string) Token {
 	err := db.Conn.QueryRow(selectTokenSQL, encryptionKey, account_id).Scan(&decryptedToken, &quota, &quotaUsage)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return Token{}
+			return model.Token{}
 		}
 
 		log.Fatalf("failed to query token: %v", err)
 	}
 
-	return Token{AccountID: account_id, Token: decryptedToken, Quota: quota, QuotaUsage: quotaUsage}
+	return model.Token{AccountID: account_id, Token: decryptedToken, Quota: quota, QuotaUsage: quotaUsage}
 }
 
 func generateToken() string {
@@ -138,7 +137,7 @@ func generateToken() string {
 	return token
 }
 
-func (db *DB) CreateToken(accountID string, quota int) (User, error) {
+func (db *DB) CreateToken(accountID string, quota int) (model.User, error) {
 	token := generateToken()
 	encryptionKey := os.Getenv("MYSQL_ENCRYPTION_KEY")
 
@@ -154,11 +153,11 @@ func (db *DB) CreateToken(accountID string, quota int) (User, error) {
 	var count int
 	err := db.Conn.QueryRow(selectTokenSQL, accountID).Scan(&count)
 	if err != nil {
-		return User{}, fmt.Errorf("failed to query token: %v", err)
+		return model.User{}, fmt.Errorf("failed to query token: %v", err)
 	}
 
 	if count > 0 {
-		return User{}, fmt.Errorf("AccountID '%v' already exists", accountID)
+		return model.User{}, fmt.Errorf("AccountID '%v' already exists", accountID)
 	}
 
 	insertTokenSQL := `
@@ -167,8 +166,8 @@ func (db *DB) CreateToken(accountID string, quota int) (User, error) {
 
 	_, err = db.Conn.Exec(insertTokenSQL, accountID, token, encryptionKey, quota, 0)
 	if err != nil {
-		return User{}, fmt.Errorf("failed to insert token: %v", err)
+		return model.User{}, fmt.Errorf("failed to insert token: %v", err)
 	}
 
-	return User{AccountID: accountID, Token: token, Quota: quota}, nil
+	return model.User{AccountID: accountID, Token: token, Quota: quota}, nil
 }
