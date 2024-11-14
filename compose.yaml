@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: passwd
+      MYSQL_DATABASE: lynxgate_test
+    volumes:
+      - ./dbdata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      no_cache: true
+    environment:
+      MYSQL_DSN: root:passwd@tcp(db:3306)/lynxgate_test
+      MYSQL_ENCRYPTION_KEY: b7d6c6c54d996715b96f297904bc1fd9
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure

@@ -76,14 +76,14 @@ func (db *DB) DeleteToken(accountID string) error {
 	return nil
 }
 
-func (db *DB) GetTokens() []Token {
+func (db *DB) GetTokens() ([]Token, error) {
 	selectTokensSQL := `
-	SELECT account_id, AES_DECRYPT(token, ?), quota, quota_usage
+	SELECT account_id, COALESCE(AES_DECRYPT(token, ?), ''), quota, quota_usage
 	FROM token;`
 
 	rows, err := db.Conn.Query(selectTokensSQL, encryptionKey)
 	if err != nil {
-		log.Fatalf("failed to query tokens: %v", err)
+		return nil, fmt.Errorf("failed to query tokens: %v", err)
 	}
 	defer rows.Close()
 
@@ -93,13 +93,22 @@ func (db *DB) GetTokens() []Token {
 		var quota, quotaUsage int
 
 		if err := rows.Scan(&accountID, &decryptedToken, &quota, &quotaUsage); err != nil {
-			log.Fatalf("failed to scan token: %v", err)
+			return nil, fmt.Errorf("failed to scan token: %v", err)
 		}
 
-		tokens = append(tokens, Token{AccountID: accountID, Token: decryptedToken, Quota: quota, QuotaUsage: quotaUsage})
+		tokens = append(tokens, Token{
+			AccountID:  accountID,
+			Token:      decryptedToken,
+			Quota:      quota,
+			QuotaUsage: quotaUsage,
+		})
 	}
 
-	return tokens
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
+	}
+
+	return tokens, nil
 }
 
 func (db *DB) GetToken(account_id string) Token {

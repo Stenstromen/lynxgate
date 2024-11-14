@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -19,6 +20,13 @@ func New(dsn string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Set connection pool settings
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(5 * time.Minute)
+
 	return &DB{Conn: db}, nil
 }
 

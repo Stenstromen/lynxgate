@@ -53,7 +53,11 @@ func NewHandler(db *db.DB) *http.ServeMux {
 	})
 
 	mux.HandleFunc("GET /tokens", func(w http.ResponseWriter, r *http.Request) {
-		tokens := db.GetTokens()
+		tokens, err := db.GetTokens()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to get tokens: %v", err), http.StatusInternalServerError)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		response, err := json.Marshal(tokens)

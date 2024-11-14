@@ -46,6 +46,12 @@ podman run --rm -d \
 ghcr.io/stenstromen/lynxgate:latest
 ```
 
+### Podman Compose
+
+```bash
+podman compose up
+```
+
 ### Example requests
 
 #### Create API Token
