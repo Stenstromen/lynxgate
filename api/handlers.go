@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/stenstromen/lynxgate/db"
-	. "github.com/stenstromen/lynxgate/model"
+	"github.com/stenstromen/lynxgate/model"
 )
 
 func NewHandler(db *db.DB) *http.ServeMux {
@@ -100,7 +100,7 @@ func NewHandler(db *db.DB) *http.ServeMux {
 	})
 
 	mux.HandleFunc("POST /tokens", func(w http.ResponseWriter, r *http.Request) {
-		var req TokenRequest
+		var req model.TokenRequest
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {

@@ -3,8 +3,6 @@ repos:
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
     hooks:
-      - id: go-fmt
-        always_run: true
       - id: go-vet
         always_run: true
       - id: go-build
