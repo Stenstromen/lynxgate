@@ -21,10 +21,10 @@ test-deps:
 	@which jq >/dev/null 2>&1 || (echo "❌ jq is required but not installed. Aborting." && exit 1)
 
 test: test-deps
-	@echo "Creating podman network..."
+	@echo "ℹ️ Creating podman network..."
 	podman network create $(NETWORK_NAME) || true
 
-	@echo "Starting MariaDB container..."
+	@echo "ℹ️ Starting MariaDB container..."
 	podman run -d --name $(DB_CONTAINER) \
 		--network $(NETWORK_NAME) \
 		-e MYSQL_ROOT_PASSWORD=$(DB_PASSWORD) \
@@ -33,25 +33,26 @@ test: test-deps
 		-e MYSQL_PASSWORD=$(DB_PASSWORD) \
 		docker.io/library/mariadb:latest
 
-	@echo "Building application container..."
+	@echo "ℹ️ Building application container..."
 	podman build -t $(APP_CONTAINER) .
 
-	@echo "Waiting for MariaDB to be ready..."
+	@echo "ℹ️ Waiting for MariaDB to be ready..."
 	sleep 5
 
-	@echo "Starting application container..."
+	@echo "ℹ️ Starting application container..."
 	podman run -d --name $(APP_CONTAINER) \
 		--network $(NETWORK_NAME) \
 		-p 8080:8080 \
 		-e MYSQL_DSN="lynxgate:$(DB_PASSWORD)@tcp($(DB_CONTAINER):3306)/lynxgate" \
 		-e MYSQL_ENCRYPTION_KEY="7AE49A19B3C844BDB68E460D9224A5D0" \
+		-e CURRENT_DATE="2024-03-01" \
 		$(APP_CONTAINER)
 
-	@echo "Running integration tests..."
+	@echo "ℹ️ Running integration tests..."
 	./integration_test.sh
 
 clean:
-	@echo "Cleaning up containers and volumes..."
+	@echo "ℹ️ Cleaning up containers and volumes..."
 	podman stop $(APP_CONTAINER) $(DB_CONTAINER) || true
 	podman rm -v $(APP_CONTAINER) $(DB_CONTAINER) || true
 	podman network rm $(NETWORK_NAME) || true

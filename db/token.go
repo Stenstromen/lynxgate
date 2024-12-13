@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -26,8 +27,23 @@ func (db *DB) ValidateToken(providedToken string) (int, error) {
 		if err == sql.ErrNoRows {
 			return 2, nil
 		}
-
 		return 2, fmt.Errorf("failed to query token: %v", err)
+	}
+
+	now := db.GetCurrentTime()
+	currentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	lastMonth := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
+
+	if currentMonth.After(lastMonth) {
+		resetSQL := `
+        UPDATE token 
+        SET quota_usage = 0 
+        WHERE token = AES_ENCRYPT(?, ?);`
+
+		if _, err := db.Conn.Exec(resetSQL, providedToken, encryptionKey); err != nil {
+			return 1, fmt.Errorf("failed to reset quota: %v", err)
+		}
+		quotaUsage = 0
 	}
 
 	if quota == 0 {
@@ -159,3 +175,14 @@ func (db *DB) CreateToken(accountID string, quota int) (model.User, error) {
 
 	return model.User{AccountID: accountID, Token: token, Quota: quota}, nil
 }
+
+/* func (db *DB) GetCurrentTime() time.Time {
+	if dateStr := os.Getenv("CURRENT_DATE"); dateStr != "" {
+		if t, err := time.Parse("2006-01-02", dateStr); err == nil {
+			return t
+		}
+		log.Printf("Failed to parse CURRENT_DATE: %v", dateStr)
+	}
+	return time.Now()
+}
+*/

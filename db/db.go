@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -65,4 +66,15 @@ func (db *DB) InitializeDB() error {
 	}
 
 	return nil
+}
+
+func (db *DB) GetCurrentTime() time.Time {
+	if dateStr := os.Getenv("CURRENT_DATE"); dateStr != "" {
+		if t, err := time.Parse("2006-01-02", dateStr); err == nil {
+			log.Printf("Using date from environment: %s", t.Format("2006-01-02"))
+			return t
+		}
+		log.Printf("Failed to parse CURRENT_DATE: %v", dateStr)
+	}
+	return time.Now()
 }

@@ -15,7 +15,7 @@ import (
 func scheduleQuotaReset(db *db.DB) {
 	go func() {
 		for {
-			now := time.Now()
+			now := db.GetCurrentTime()
 			nextMonth := time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, time.UTC)
 			timeUntilReset := nextMonth.Sub(now)
 
