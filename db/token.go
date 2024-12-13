@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -14,17 +13,6 @@ import (
 )
 
 func (db *DB) ValidateToken(providedToken string) (int, error) {
-	if time.Now().Day() == 1 {
-		resetQuotaUsageSQL := `
-        UPDATE token
-        SET quota_usage = 0
-        WHERE token = AES_ENCRYPT(?, ?);`
-
-		if _, err := db.Conn.Exec(resetQuotaUsageSQL, providedToken, encryptionKey); err != nil {
-			return 1, fmt.Errorf("failed to reset quota usage: %v", err)
-		}
-	}
-
 	selectTokenSQL := `
     SELECT AES_DECRYPT(token, ?), quota, quota_usage
     FROM token
